@@ -1,0 +1,26 @@
+[api]
+#  insecure=true
+
+[providers.docker]
+
+  [entryPoints]
+    [entryPoints.web]
+      address = ":80"
+
+    [entryPoints.websecure]
+      address = ":443"
+
+  [certificatesResolvers.myresolver.acme]
+    email = "<Your Email>"
+    storage = "acme.json"
+    # caServer = "https://acme-staging-v02.api.letsencrypt.org/directory" # Used for testing.
+   [certificatesResolvers.myresolver.acme.httpChallenge]
+      # used during the challenge
+      entryPoint = "web"
+
+  [web.routers]
+    [web.routers.owncloud-owncloud]
+    #rule = "Host('"<Host name>') && Path('/owncloud')"
+    rule = "Path('/owncloud')"
+    [web.routers.owncloud-owncloud.tls]
+    certResolver = "myresolver"
