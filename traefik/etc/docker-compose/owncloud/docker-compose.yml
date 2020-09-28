@@ -5,15 +5,15 @@ volumes:
     driver: local
     driver_opts:
       type: nfs
-      o: addr=<NFS_IP>,nolock,soft,rw
-      device: :Path/To/NFS/owncloud # folder
+      o: addr=xxx.xxx.xxx.xxx,nolock,soft,rw
+      device: :/owncloud # folder
   mysql:
     driver: local
   backup:
     driver: local
   redis:
     driver: local
-mht
+
 services:
 
   owncloud:
@@ -29,18 +29,20 @@ services:
       - OWNCLOUD_DB_TYPE=mysql
       - OWNCLOUD_DB_NAME=owncloud
       - OWNCLOUD_DB_USERNAME=owncloud
-      - OWNCLOUD_DB_PASSWORD=owncloud
+      - OWNCLOUD_DB_PASSWORD=${MARIADB_USER}
       - OWNCLOUD_DB_HOST=db
       - OWNCLOUD_ADMIN_USERNAME=${ADMIN_USERNAME}
-      - OWNCLOUD_ADMIN_PASSWORD=${ADMIN_PASSWORD}
+     - OWNCLOUD_ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - OWNCLOUD_UTF8MB4_ENABLED=true
       - OWNCLOUD_REDIS_ENABLED=true
       - OWNCLOUD_REDIS_HOST=redis
     labels:
-      - traefik.docker.network=web
-      - traefik.http.routers.owncloud-owncloud.rule=(Host("<Host Name>") && Path("/owncloud")) || Host("<owncloud.Host Name>")
-      - traefik.http.routers.owncloud-owncloud.tls=true
-      - traefik.http.routers.owncloud-owncloud.tls.certresolver=myresolver
+      - "traefik.http.routers.owncloud.rule=Host(`host.com`) || Host(`owncolud.host.com`)"
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.owncloud.entrypoints=websecure"
+      - "traefik.http.routers.owncloud.tls=true"
+      - "traefik.http.routers.owncloud.tls.certresolver=le"
+      - "traefik.enable=true"
     networks:
       - web
       - internal
@@ -56,13 +58,13 @@ services:
     image: webhippie/mariadb:latest
     restart: always
     environment:
-      - MARIADB_ROOT_PASSWORD=password # Change this!
+      - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT} # Change this!
       - MARIADB_USERNAME=owncloud
-      - MARIADB_PASSWORD=owncloud # Change this!
+      - MARIADB_PASSWORD=${MARIADB_USER} # Change this!
       - MARIADB_DATABASE=owncloud
       - MARIADB_MAX_ALLOWED_PACKET=128M
       - MARIADB_INNODB_LOG_FILE_SIZE=64M
-      - MARIADB_INNODB_LARGE_PREFIX=ON
+     - MARIADB_INNODB_LARGE_PREFIX=ON
       - MARIADB_INNODB_FILE_FORMAT=Barracuda
     healthcheck:
       test: ["CMD", "/usr/bin/healthcheck"]
@@ -74,6 +76,8 @@ services:
       - backup:/var/lib/backup
     networks:
       - internal
+    labels:
+      - "traefik.enable=false"
 
   redis:
     image: webhippie/redis:latest
@@ -89,8 +93,13 @@ services:
       - redis:/var/lib/redis
     networks:
       - internal
-
+    labels:
+      - "traefik.enable=false"
+      
 networks:
   web:
     external: true
   internal:
+
+
+
